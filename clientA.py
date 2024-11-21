@@ -177,7 +177,7 @@ def start_des():
         encrypted_message = enc.encrypt(message, key_DES)
         
         client_socket.send(encrypted_message.encode())
-        print("Encrypted message sent to Client A")
+        print("Encrypted message sent to Client B")
         
         if message.lower() == "exit":
             print("You have ended the conversation")
@@ -194,4 +194,3 @@ def attachment():
     
 if __name__ == "__main__":
     request_public_key_b()
-    

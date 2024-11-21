@@ -189,7 +189,7 @@ def start_des():
         message = input("Enter message: ")
         encrypted_message = enc.encrypt(message, key_DES)
         conn.send(encrypted_message.encode())
-        print(f"Encrypted message sent to Client B")
+        print(f"Encrypted message sent to Client A")
         
         if message == "exit":
             print("You have ended the conversation")
