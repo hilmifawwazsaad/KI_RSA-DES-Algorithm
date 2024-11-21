@@ -113,49 +113,6 @@ def rsa_key():
     
     return public_key
 
-
-# def handle_client(client_socket, client_address, public_key):
-#     global client_keys, COMPLETED_CLIENTS
-    
-#     try:
-#         print(f"Connection established with {client_address}")
-#         # Terima request dari client
-#         request = client_socket.recv(2048).decode()
-#         if request == "REQUEST_PUBLIC_KEY":
-#             print(f"Public key request received from {client_address}")
-            
-#             # Kirimkan public key (e, n) ke client
-#             data = f"{public_key[0]}\n{public_key[1]}"
-#             client_socket.sendall(data.encode())
-#             print(f"Public key sent to client {client_address}.")
-            
-#             # Terima public key client
-#             client_public_key = client_socket.recv(2048).decode()
-#             e_client, n_client = map(int, client_public_key.split("\n"))
-#             client_keys[client_address] = (e_client, n_client)
-#             # print(f"Stored public key from client {client_address}: ({e_client}, {n_client})")
-            
-#         # Tunggu konfirmasi dari client
-#         confirmation = client_socket.recv(2048).decode()
-#         if confirmation == "PUBLIC_KEY_RECEIVED":
-#             print(f"Client {client_address} has confirmed receipt of public key.")
-    
-#     except Exception as e:
-#         print(f"Error with client {client_address}: {e}")
-#     finally:
-#         check_public_keys()
-#         client_socket.close()
-#         print(f"Connection with {client_address} closed.")
-        
-#         # Tambahkan counter selesai untuk client
-#         COMPLETED_CLIENTS += 1
-#         if COMPLETED_CLIENTS >= MAX_CLIENTS:
-#             print("All clients have completed their processes. Shutting down server...")
-#             COMPLETED_CLIENTS = 0
-#             print(f"RESET")
-#             print(f"Completed clients = {COMPLETED_CLIENTS} for the next session.")
-#             os._exit(0)  # Menghentikan server secara paksa
-
 def start_server():
     server_host = socket.gethostname()
     server_port = 31232
@@ -215,21 +172,7 @@ def sent_public_keys(client_socket, client_address):
             print(f"Completed clients = {COMPLETED_CLIENTS} for the next session.")
             os._exit(0)  # Menghentikan server secara paksa
 
-# def check_public_keys():
-#     global client_keys
-#     if not client_keys:
-#         print("Database client_keys is empty.")
-#         return
-    
-#     print("Isi database client_keys:")
-#     for address, key_pair in client_keys.items():
-#         e_client, n_client = key_pair
-#         print(f"Client {address}: e = {e_client}, n = {n_client}")
-
-if __name__ == "__main__":
-    # public_key = rsa_key()
-    # start_server(public_key)
-    
+if __name__ == "__main__":   
     start_server()
     sent_public_keys()
     print("Server is running...")

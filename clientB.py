@@ -8,11 +8,6 @@ import json
 import encrypt as enc
 import decrypt as dec
 
-# public_key_server = None
-# public_key_b = None
-# private_key_b = None
-# public_key_a = None
-
 key_DES = ''
 
 public_key_b = {
@@ -102,46 +97,6 @@ def generate_key_pair(bits=1024):
     private_key = (d, n)
     return public_key, private_key
 
-# def rsa_key():
-#     global public_key_b, private_key_b
-#     public_key_b, private_key_b = generate_key_pair()
-#     print("RSA Key Pair for Client B Generated")
-
-#     folder = "key"
-#     if not os.path.exists(folder):
-#         os.makedirs(folder)
-
-#     with open("key/5. public_key_B.txt", "w") as pub_file:
-#         pub_file.write(f"{public_key_b[0]}\n{public_key_b[1]}")
-#     with open("key/6. private_key_B.txt", "w") as priv_file:
-#         priv_file.write(f"{private_key_b[0]}\n{private_key_b[1]}")
-
-# Fungsi ini untuk mendapatkan public key dari server dan mengirimkan public key B ke server
-# def get_server_public_key():
-#     global public_key_server, public_key_b, private_key_b
-#     server_host = socket.gethostname()
-#     server_port = 31232  # Assuming the server is running on this port
-
-#     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-#         s.connect((server_host, server_port))
-#         print("Connected to server to get public key")
-        
-#         s.sendall(b"REQUEST_PUBLIC_KEY")
-#         data = s.recv(1024).decode()
-        
-#         e, n = map(int, data.split('\n'))
-#         public_key_server = (e, n)
-#         print("Received public key from server:", public_key_server)
-        
-#         public_key_b_str = f"{public_key_b[0]}\n{public_key_b[1]}"
-#         s.sendall(public_key_b_str.encode())
-#         print("Public key B sent to server")
-        
-#         s.sendall(b"PUBLIC_KEY_RECEIVED")
-#         print("Public key successfully received and sent")
-
-
-
 def request_public_key_a():
     global public_key_a, public_key_server
     server_host = socket.gethostname()
@@ -215,61 +170,8 @@ def receive_key_DES(client_socket):
         print(f"Key response sent to Client A: {response}")
         print("--------------------------------------------------------")
         start_des()
-
-
-# def send_handshake_to_a():
-#     global public_key_a
-#     e, n = public_key_a["e"], public_key_a["n"]
-#     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#     server_host = socket.gethostname()
-#     server_port = 31233
-    
-#     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Untuk menghindari port terblokir
-#     server_socket.bind((server_host, server_port))
-#     server_socket.listen()
-#     print(f"Listening for connection from Client A on port {server_port}")
-    
-#     client_socket, client_address = server_socket.accept()
-#     with client_socket:
-#         request_public_key_a()
-#         print(f"Connection established with {client_address}")
-        
-#         # Buat dan kirim handshake ke Client A
-#         id = "B"
-#         n2 = "20"
-#         handshake = f"{id}||{n2}"
-#         encrypted_handshake = rsa.rsa_encrypt(handshake, e, n)
-#         client_socket.send(pickle.dumps(encrypted_handshake))
-        
-#         print(f"Handshake sent to Client A: {handshake}")
-        
-#         handshake_response = pickle.loads(client_socket.recv(2048))
-#         handshake_response = rsa.rsa_decrypt(handshake_response, private_key_b["d"], private_key_b["n"])
-#         handshake_response = json.loads(handshake_response)
-        
-#         print(f"Handshake response from Client A: {handshake_response}")
-    
+ 
 def start_des():
-    # global key_DES
-    # client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # client_socket.connect((socket.gethostname(), 31234))
-    
-    # while True:
-    #     message = input("Enter message to send to Client A: ")
-    #     encrypted_message = enc.encrypt(message, key_DES)
-        
-    #     client_socket.send(encrypted_message.encode())
-    #     print(f"Message sent to Client A: {message}")
-        
-    #     if message.lower() == "exit":
-    #         print("You have ended the conversation")
-    #         client_socket.close()
-    #         break
-        
-    #     encrypted_response = client_socket.recv(2048).decode()
-    #     decrypted_response = dec.decrypt(encrypted_response, key_DES)
-    #     print(f"Response from Client A: {encrypted_response}")
-    #     print(f"Decrypted response from Client A: {decrypted_response}")
     global key_DES
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((socket.gethostname(), 31234))
@@ -279,15 +181,12 @@ def start_des():
     while True:
         encrypted_message = conn.recv(2048).decode()
         decrypted_message = dec.decrypt(encrypted_message, key_DES)
-        # print(f"Decrypted message from Client B: {decrypted_message}")
-        # print(f"Message after decryption: {decrypted_message}")
-        
+
         if decrypted_message == "exit":
             print("Client B has ended the conversation")
             break
         
         message = input("Enter message: ")
-        # print(f"Plaintext: {message}")
         encrypted_message = enc.encrypt(message, key_DES)
         conn.send(encrypted_message.encode())
         print(f"Encrypted message sent to Client B")
@@ -299,70 +198,11 @@ def start_des():
     conn.close()
     server_socket.close()
 
-        # # Terima pesan dari Client A
-        # encrypted_message = pickle.loads(client_socket.recv(2048))
-        # message = dec.decrypt(encrypted_message, key_DES)
-        # print(f"Received message from Client A: {message}")
-
-        # # Kirim pesan ke Client A
-        # message = input("Enter message to send to Client A: ")
-        # encrypted_message = enc.encrypt(message, key_DES)
-        # client_socket.send(pickle.dumps(encrypted_message))
-        # print(f"Message sent to Client A: {message}")
-        # # try:
-        #     # Terima pesan terenkripsi dari Client A
-        #     encrypted_message = pickle.loads(client_socket.recv(2048))
-        #     message = dec.decrypt(encrypted_message, key_DES)
-        #     print(f"Received message from Client A: {message}")
-
-        #     # Kirim pesan terenkripsi ke Client A
-        #     message = input("Enter message to send to Client A: ")
-        #     encrypted_message = enc.encrypt(message, key_DES)
-        #     print(f"Encrypted message: {encrypted_message}")
-        #     client_socket.send(pickle.dumps(encrypted_message))
-        #     print("Encrypted message sent to Client B")
-        # except OSError as e:
-        #     print(f"Socket error: {e}")
-        #     break
-        
-        # server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # server_host = socket.gethostname()
-        # server_port = 31234  # Port for DES communication
-
-        # server_socket.bind((server_host, server_port))
-        # server_socket.listen()
-
-        # client_socket, client_address = server_socket.accept()
-        # with client_socket:
-
-        #     # Receive encrypted message from Client A
-        #     encrypted_message = pickle.loads(client_socket.recv(2048))
-        #     message = dec.decrypt(encrypted_message, key_DES)
-        #     # print(f"Received message from Client A: {message}")
-
-        # # Send encrypted message to Client A
-        # message = input("Enter message to send to Client A: ")
-        # encrypted_message = enc.encrypt(message, key_DES)
-        # client_socket.send(pickle.dumps(encrypted_message))
-        # print(f"Message sent to Client A: {message}")
-
-        # # Receive encrypted response from Client A
-        # encrypted_response = pickle.loads(client_socket.recv(2048))
-        # response = dec.decrypt(encrypted_response, key_DES)
-        # print(f"Response from Client A: {response}")
-        
-
 def attachment():
     print("--------------------------------------------------------")
     print("Client 2 Ready for Communication")
     print("--------------------------------------------------------")
 if __name__ == "__main__":
-    # rsa_key()
-    # get_server_public_key() 
-    
     request_public_key_a()
-    
     start_des()
-    # send_handshake_to_a()
-    # decrypt()
+ 

@@ -10,11 +10,11 @@ def convert_hexbin(s, direction="hex2bin"):
     result = ""
     
     if direction == "hex2bin":
-            for i in s:
-                    result = result + map_hexbin[i]
+        for i in s:
+            result = result + map_hexbin[i]
     elif direction == "bin2hex":
-            for i in range(0, len(s), 4):
-                    result = result + map_binhex[s[i:i+4]]
+        for i in range(0, len(s), 4):
+            result = result + map_binhex[s[i:i+4]]
     return result
 
 def convert_bindec(s, direction="bin2dec"):
@@ -43,35 +43,29 @@ def string_to_hex(plaintext):
     return ''.join([format(ord(c), '02X') for c in plaintext])
 
 def hex_to_string(hex_text):
-    return bytes.fromhex(hex_text).decode('utf-8', errors='ignore')
+    return bytes.fromhex(hex_text).decode('utf-8')
 
 def permute(k, arr, n):
     if len(k) < max (arr):
-            return "Panjang string 'k' kurang dari indeks maksimum di 'arr'"
+        return "Panjang string 'k' kurang dari indeks maksimum di 'arr'"
     return ''.join([k[arr[i] - 1] for i in range(n)])
 
 def xor(x, y):
     return ''.join('0' if x == y else '1' for x, y in zip(x, y))
 
 def shift_left(k, shifts):
-    s = ""
-    for i in range(shifts):
-        for j in range(1, len(k)):
-                s = s + k[j]
-        s = s + k[0]
-        k = s
-        s = ""
-    return k
+    return k[shifts:] + k[:shifts]
 
-def decrypt_ecb(ciphertext, key):
-    plaintext = ""
+def encrypt_ecb(plaintext, key):
+    ciphertext = ""
 
-    for i in range(0, len(ciphertext), 16):
-        block = ciphertext[i:i+16]
-        decrypt_block = des_decrypt(block, key)
-        plaintext = plaintext + decrypt_block
-    
-    return plaintext
+    for i in range(0, len(plaintext), 16):
+        block = plaintext[i:i+16].ljust(16, '0')
+        encrypt_block = des_encrypt(block, key)
+
+        ciphertext += encrypt_block
+
+    return ciphertext  
 
 # Initializing the Initial Permutation Table (IP)
 init_perm = [58, 50, 42, 34, 26, 18, 10, 2,
@@ -167,62 +161,55 @@ shift_table = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
 
 # Key Compression Table
 key_comp = [14, 17, 11, 24, 1, 5, 3, 28,
-        15, 6, 21, 10, 23, 19, 12, 4,
-        26, 8, 16, 7, 27, 20, 13, 2,
-        41, 52, 31, 37, 47, 55, 30, 40,
-        51, 45, 33, 48, 44, 49, 39, 56,
-        34, 53, 46, 42, 50, 36, 29, 32]
+            15, 6, 21, 10, 23, 19, 12, 4,
+            26, 8, 16, 7, 27, 20, 13, 2,
+            41, 52, 31, 37, 47, 55, 30, 40,
+            51, 45, 33, 48, 44, 49, 39, 56,
+            34, 53, 46, 42, 50, 36, 29, 32]
 
-
-def des_decrypt (ciphertext, round_keys):
-    ciphertext_bin = convert_hexbin(ciphertext, "hex2bin").zfill(64)
-    initial_perm = permute(ciphertext_bin, init_perm, 64)
-
-    left = initial_perm[0:32]
-    right = initial_perm[32:64]
+def des_encrypt(plaintext, round_keys):
+    # bin_key = convert_hexbin(key, "hex2bin")
+    bin_plaintext = convert_hexbin(plaintext, "hex2bin").zfill(64)
+    initial_permuted = permute(bin_plaintext, init_perm, 64)
+    
+    left = initial_permuted[0:32]
+    right = initial_permuted[32:64]
     
     for i in range(0, 16):
-            right_expanded = permute(right, e_box, 48)
-            right_xor = xor(right_expanded, round_keys[i])
+        expanded_right = permute(right, e_box, 48)
+        right_xor = xor(expanded_right, round_keys[i])
 
-            sbox_substitution = ""
-            for j in range(0, 8):
-                    row = convert_bindec(int(right_xor[j*6] + right_xor[j*6 + 5]), "bin2dec")
-                    col = convert_bindec(int(right_xor[j*6 + 1] + right_xor[j*6 + 2] + right_xor[j*6 + 3] + right_xor[j*6 + 4]), "bin2dec")
-                    val = s_box[j][row][col]
-                    sbox_substitution = sbox_substitution + convert_bindec(val, "dec2bin").zfill(4)
-
-            sbox_substitution = permute(sbox_substitution, p_box, 32)
-            result = xor(left, sbox_substitution)
-            left = result
-
-            if i != 15:
-                    left, right = right, left
-
+        sbox_substitution = ""
+        for j in range(0, 8):
+            row = convert_bindec(int(right_xor[j*6] + right_xor[j*6+5]), "bin2dec")
+            col = convert_bindec(int(right_xor[j*6 + 1] + right_xor[j*6 + 2] + right_xor[j*6 + 3] + right_xor[j*6 + 4]), "bin2dec")
+            val = s_box[j][row][col]
+            sbox_substitution = sbox_substitution + convert_bindec(val, "dec2bin").zfill(4)
+        
+        sbox_substitution = permute(sbox_substitution, p_box, 32)
+        result = xor(left, sbox_substitution)
+        left = result
+        if i != 15:
+                left, right = right, left
+            
     combined = right + left
-    decrypt_bin = permute(combined, final_perm, 64)
+    encrypted_bin = permute(combined, final_perm, 64)
+    return encrypted_bin
 
-    print("Hasil dekripsi dalam biner:", decrypt_bin)  # Debugging
-
-    return decrypt_bin
-
-def decrypt(ciphertext, key):
+def encrypt(plaintext, key):
     key = permute(key, keyp, 56)
-    left = key[0:28]
-    right = key[28:56]
-    round_keys_decrypt = []
+    left = key[:28]
+    right = key[28:]
+    round_keys = []
 
     for i in range(0, 16):
-            left = shift_left(left, shift_table[i])
-            right = shift_left(right, shift_table[i])
-            combined_key = left + right
-            round_key = permute(combined_key, key_comp, 48)
-            round_keys_decrypt.insert(0, round_key)
+        left = shift_left(left, shift_table[i])
+        right = shift_left(right, shift_table[i])
+        combine_string = left + right
+        round_key = permute(combine_string, key_comp, 48)
+        round_keys.append(round_key)
+    
+    plaintext_hex = string_to_hex(plaintext)
+    chipertext = convert_hexbin(encrypt_ecb(plaintext_hex, round_keys), "bin2hex")
 
-    decrypted_text = convert_hexbin(decrypt_ecb(ciphertext, round_keys_decrypt), "bin2hex")
-    plaintext = hex_to_string(decrypted_text)
-    print("Ciphertext yang diterima:", ciphertext)
-    if decrypted_text:
-            print("Plaintext yang diterima:", plaintext)
-    else:
-            print("Plaintext tidak ditemukan")
+    return chipertext
